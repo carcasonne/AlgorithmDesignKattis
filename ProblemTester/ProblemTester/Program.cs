@@ -50,8 +50,10 @@ try
         Console.WriteLine();
     }
 
-
     Console.WriteLine($"Success rate: {(totalSuccesses / noOfTestCases) * 100}%");
+
+    Console.WriteLine("Press any key to close this window");
+    Console.ReadLine();
 }
 catch (Exception)
 {
