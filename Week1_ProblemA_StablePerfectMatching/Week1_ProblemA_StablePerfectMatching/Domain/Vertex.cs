@@ -5,15 +5,20 @@ public class Vertex
 {
     public int Id { get; set; }
     public string Name { get; set; }
-	public bool IsProposer { get; set; }
-	public IEnumerable<string> Preferences { get; set; }
-	
-	public Vertex(int id, string name, IEnumerable<string> preferences, bool isProposer)
+    public Vertex? Match { get; set; }
+    public bool IsMatched => Match != null;
+
+    public Vertex(int id, string name)
 	{
 		Id = id;
 		Name = name;
-		IsProposer = isProposer;
-		Preferences = preferences;
-	}
+        Match = null;
+    }
+
+    public void MatchWithVertex(Vertex vertex)
+    {
+        Match = vertex;
+        vertex.Match = this;
+    }
 }
 
