@@ -12,9 +12,9 @@ var vars = firstLine.Split(" ");
 
 var n = Int32.Parse(vars[0]);
 var m = Int32.Parse(vars[1]);
+var mCount = 0;
 
-var Proposers = new List<ProposerVertex>();
-var Rejectors = new List<RejectorVertex>();
+var Vertices = new List<Vertex>();
 var Edges = new HashSet<Edge>();
 
 // Read n lines of vertices + its preferences
@@ -31,41 +31,39 @@ for(var i = 0; i < n; i++)
     var vertexName = names[0];
     var preferences = names.Skip(1).ToList();
 
+    var vertex = new Vertex(vertexName);
+    Vertices.Add(vertex);
+
     foreach (var preference in preferences)
     {
+        mCount++;
+
         var edge = new Edge(vertexName, preference);
 
-        if (Edges.Contains(edge))
+        if (!Edges.Contains(edge))
         {
-            var rejector = new RejectorVertex(vertexName, preferences);
-            if(!Rejectors.Any(x => x.Name == vertexName))
-                Rejectors.Add(rejector);
+            if (!vertex.IsProposer)
+            {
+                vertex.IsProposer = true;
+                var edges = preferences.Select(x => new Edge(vertexName, x)).Reverse().ToList();
+                vertex.ProposerPreferences = new Stack<Edge>(edges);
+            }
+        }
+        else
+        {
+            if (!vertex.IsRejector)
+            {
+                vertex.IsRejector = true;
+                vertex.RejectorPreferences = preferences;
+            }
         }
 
         Edges.Add(edge);
     }
 }
 
-var proposerNameToVertex = new Dictionary<string, ProposerVertex>();
-
-var reverseEdges = Edges.Reverse();
-
-foreach (var edge in reverseEdges) 
-{
-    ProposerVertex proposer;
-
-    var proposerName = edge.FromName;
-    if (proposerNameToVertex.ContainsKey(proposerName))
-    {
-        proposer = proposerNameToVertex[proposerName];
-        proposer.Preferences.Push(edge.ToName);
-        continue;
-    }
-
-    proposer = new ProposerVertex(proposerName, new List<string>(new [] {edge.ToName}));
-    Proposers.Add(proposer);
-    proposerNameToVertex[proposerName] = proposer;
-}
+var Proposers = Vertices.Where(x => x.IsProposer).ToList();
+var Rejectors = Vertices.Where(x => x.IsRejector).ToList();
 
 while (true)
 {
@@ -73,15 +71,15 @@ while (true)
     if (proposer == null)
         break;
 
-    var rejectorName = proposer.Preferences.Pop();
-    var rejector = Rejectors.FirstOrDefault(x => x.Name == rejectorName);
+    var rejectorEdge = proposer.ProposerPreferences.Pop();
+    var rejector = Rejectors.FirstOrDefault(x => x.Name == rejectorEdge.ToName);
     if (rejector == null)
-        break;
+        continue;
 
-    // If rejector has no matches, she acceps
+    // If rejector has no matches, she accepts
     if (!rejector.IsMatched)
     {
-        proposer.MatchWithVertex(rejector);
+        proposer.MatchWith(rejector);
     }
     // If rejector prefers the new proposer, she accepts
     else if (rejector.PrefersToMatch(proposer))
@@ -97,8 +95,9 @@ if (Proposers.Any(p => !p.IsMatched))
 }
 else
 {
-    foreach (var proposer in Proposers)
+    var edges = Proposers.Select(x => new Edge(x.Name, x.Match!.Name)).ToHashSet();
+    foreach (var proposer in edges)
     {
-        Console.WriteLine($"{proposer.Name} {proposer.Match!.Name}");
+        Console.WriteLine($"{proposer.FromName} {proposer.ToName}");
     }
 }
