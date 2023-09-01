@@ -3,7 +3,7 @@
 public class RejectorVertex : Vertex
 {
     public List<string> Preferences { get; set; }
-    public RejectorVertex(int id, string name, IEnumerable<string> preferences) : base(id, name)
+    public RejectorVertex(string name, IEnumerable<string> preferences) : base(name)
     {
         Preferences = preferences.ToList();
     }

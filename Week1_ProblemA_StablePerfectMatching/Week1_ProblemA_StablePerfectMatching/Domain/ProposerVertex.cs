@@ -5,7 +5,7 @@ public class ProposerVertex : Vertex
     public Stack<string> Preferences { get; set; }
     public bool IsExhausted => Preferences.Count == 0;
 
-    public ProposerVertex(int id, string name, IEnumerable<string> preferences) : base(id, name)
+    public ProposerVertex(string name, IEnumerable<string> preferences) : base(name)
     {
         Preferences = new Stack<string>();
         foreach (var pName in preferences.Reverse())

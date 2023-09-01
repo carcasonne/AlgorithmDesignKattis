@@ -8,35 +8,63 @@ using System.Threading.Tasks;
 using Week1_ProblemA_StablePerfectMatching.Domain;
 
 var firstLine = Console.ReadLine();
-var vars = firstLine.ToCharArray();
+var vars = firstLine.Split(" ");
 
-var n = vars[0] - '0';
-var m = vars[2] - '0';
+var n = Int32.Parse(vars[0]);
+var m = Int32.Parse(vars[1]);
 
 var Proposers = new List<ProposerVertex>();
 var Rejectors = new List<RejectorVertex>();
-
-var halfN = n / 2; // cache
+var Edges = new HashSet<Edge>();
 
 // Read n lines of vertices + its preferences
+
+// todo plan:
+// Det her er fucking scuffed pt
+// Løsningen (måske): Lav edges indtil Edges.Count == m, men når m er overskredet ved vi, at der ikke er flere edges
+// Alle linjer, som kommer efter m er overskredet, derfor må resten af linjerne være Rejectors
+
 for(var i = 0; i < n; i++)
 {
     var line = Console.ReadLine() ?? throw new ArgumentOutOfRangeException("No line could be read");
     var names = line.Split(" ");
     var vertexName = names[0];
     var preferences = names.Skip(1).ToList();
-    var isProposer = i < halfN;
 
-    if (isProposer)
+    foreach (var preference in preferences)
     {
-        var vertex = new ProposerVertex(i, vertexName, preferences);
-        Proposers.Add(vertex);
+        var edge = new Edge(vertexName, preference);
+
+        if (Edges.Contains(edge))
+        {
+            var rejector = new RejectorVertex(vertexName, preferences);
+            if(!Rejectors.Any(x => x.Name == vertexName))
+                Rejectors.Add(rejector);
+        }
+
+        Edges.Add(edge);
     }
-    else
+}
+
+var proposerNameToVertex = new Dictionary<string, ProposerVertex>();
+
+var reverseEdges = Edges.Reverse();
+
+foreach (var edge in reverseEdges) 
+{
+    ProposerVertex proposer;
+
+    var proposerName = edge.FromName;
+    if (proposerNameToVertex.ContainsKey(proposerName))
     {
-        var vertex = new RejectorVertex(i, vertexName, preferences);
-        Rejectors.Add(vertex);
+        proposer = proposerNameToVertex[proposerName];
+        proposer.Preferences.Push(edge.ToName);
+        continue;
     }
+
+    proposer = new ProposerVertex(proposerName, new List<string>(new [] {edge.ToName}));
+    Proposers.Add(proposer);
+    proposerNameToVertex[proposerName] = proposer;
 }
 
 while (true)
