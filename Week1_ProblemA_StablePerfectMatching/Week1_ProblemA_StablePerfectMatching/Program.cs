@@ -17,13 +17,6 @@ var mCount = 0;
 var Vertices = new List<Vertex>();
 var Edges = new HashSet<Edge>();
 
-// Read n lines of vertices + its preferences
-
-// todo plan:
-// Det her er fucking scuffed pt
-// Løsningen (måske): Lav edges indtil Edges.Count == m, men når m er overskredet ved vi, at der ikke er flere edges
-// Alle linjer, som kommer efter m er overskredet, derfor må resten af linjerne være Rejectors
-
 for(var i = 0; i < n; i++)
 {
     var line = Console.ReadLine() ?? throw new ArgumentOutOfRangeException("No line could be read");
@@ -43,14 +36,8 @@ for(var i = 0; i < n; i++)
     }
 }
 
-//var Proposers = Vertices.Where(x => x.IsProposer).ToList();
-//var Rejectors = Vertices.Where(x => x.IsRejector).ToList();
-
-var runs = 0;
-
 while(true)
 {
-    runs++;
     var proposer = Vertices.FirstOrDefault(v => !v.IsMatched && Edges.Any(x => x.FromName == v.Name));
     if (proposer == null)
         break;
@@ -85,5 +72,3 @@ else
         Console.WriteLine($"{proposer.FromName} {proposer.ToName}");
     }
 }
-
-Console.WriteLine($"Runs in while loop: {runs}");
