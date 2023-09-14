@@ -36,7 +36,7 @@ for(var i = 0; i < n; i++)
     }
 }
 
-while(true)
+while(Edges.Any())
 {
     var proposer = Vertices.FirstOrDefault(v => !v.IsMatched && Edges.Any(x => x.FromName == v.Name));
     if (proposer == null)
