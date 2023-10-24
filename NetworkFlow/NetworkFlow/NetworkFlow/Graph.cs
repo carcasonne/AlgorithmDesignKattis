@@ -123,19 +123,18 @@ public class Graph : INetworkFlowable
     }
 
     // TODO: If algorithm is slow, look at linq statements in here
-    public void Augment(IEnumerable<Edge> path, Graph graph)
+    public void Augment(IEnumerable<Edge> path)
     {
         var b = path.MinBy(x => x.ResidualCapacity).ResidualCapacity; // List will never be empty, so this is fine
         foreach (var edge in path)
         {
-            if(!edge.IsReverse)
+            if (!edge.IsReverse)
             {
                 edge.Flow += b;
             }
             else
             {
                 edge.Flow -= b;
-                graph.Edges.Single(x => x.From == edge.From && x.To == edge.To).Flow -= b;
             }
         }
     }
@@ -146,7 +145,7 @@ public class Graph : INetworkFlowable
         var path = residual.FindAugmentingPath(residual);
         while(path != null)
         {
-            Augment(path, residual);
+            Augment(path);
             // Find next augmenting path
             path = residual.FindAugmentingPath(residual);
         }
