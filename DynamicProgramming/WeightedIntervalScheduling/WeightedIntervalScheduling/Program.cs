@@ -19,7 +19,6 @@ var test1 = findP(intervals[7]);
 var test2 = findP(intervals[6]);
 var test3 = findP(intervals[1]);
 
-
 Console.WriteLine(Solve(N-1));
 
 int Solve(int i)
@@ -54,19 +53,9 @@ int findP(Interval interval)
             return intervals.IndexOf(newP);
     }
     return -1;
-
-    /*var p = reverseIntervals.FirstOrDefault(x => x.Finish <= interval.Start);
-    if (p == null)
-        return 0;
-    var realP = intervals.IndexOf(p);
-    return realP + 1;*/
 }
 
-
-
 // Console.WriteLine($"Start: {interval.Start}, finish: {interval.Finish}, Weight: {interval.Weight}");
-
-
 
 public class Interval
 {
