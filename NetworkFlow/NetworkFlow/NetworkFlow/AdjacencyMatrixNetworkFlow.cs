@@ -6,14 +6,14 @@ using System.Threading.Tasks;
 
 namespace NetworkFlow;
 
-public class AdjancencyNetworkFlow
+public class AdjancencyMatrixNetworkFlow
 {
     public int V { get; set; }
     public int Source { get; set; }
     public int Sink { get; set; }
     public int[,] Graph { get; set; }
 
-    public AdjancencyNetworkFlow(int noVertices, int source, int sink) 
+    public AdjancencyMatrixNetworkFlow(int noVertices, int source, int sink) 
     {
         V = noVertices;
         Source = source;

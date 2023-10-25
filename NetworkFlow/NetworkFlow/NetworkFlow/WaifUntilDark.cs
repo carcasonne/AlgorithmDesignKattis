@@ -23,7 +23,7 @@ public static class WaifUntilDark
         var categoryBase = toyBase + m;
         var nodeCount = categoryBase + p;
 
-        var graph = new AdjancencyNetworkFlow(nodeCount, source, sink);
+        var graph = new AdjancencyMatrixNetworkFlow(nodeCount, source, sink);
 
         // Children
         // format: <n> <t_1> ... <t_n>
