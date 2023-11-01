@@ -45,12 +45,9 @@ public static class ElementaryMath
             networkFlowSolver.Graph.AddEdge(source.Id, node.Id, 1);
 
             // Connect node to result nodes
-            networkFlowSolver.Graph.AddEdge(node.Id, plusNode, 1);
-            networkFlowSolver.Graph.AddEdge(node.Id, mulNode, 1);
-            networkFlowSolver.Graph.AddEdge(node.Id, minusNode, 1);
-            networkFlowSolver.Graph.Sign[new Tuple<int, int>(node.Id, plusNode)]  = '+';
-            networkFlowSolver.Graph.Sign[new Tuple<int, int>(node.Id, mulNode)]   = '*';
-            networkFlowSolver.Graph.Sign[new Tuple<int, int>(node.Id, minusNode)] = '-';
+            networkFlowSolver.Graph.AddEdge(node.Id, plusNode, 1, '+');
+            networkFlowSolver.Graph.AddEdge(node.Id, mulNode, 1, '*');
+            networkFlowSolver.Graph.AddEdge(node.Id, minusNode, 1, '-');
         }
 
         var (flow, rGraph) = networkFlowSolver.FordFulkerson();
@@ -61,28 +58,18 @@ public static class ElementaryMath
         else
         {
             // Due to above if statement, every neighbor must have a flow
-            foreach(var valuePairNode in source.Neighbors)
+            foreach (var edges in source.Edges)
             {
                 // Find the edge from pair to result with flow
-                Tuple<int, int> correctEdge = null;
-                foreach(var possibleResultNode in networkFlowSolver.Graph.Nodes[valuePairNode].Neighbors)
-                {
-                    // Flow is stored in the residualGraph
-                    var pair = new Tuple<int, int>(valuePairNode, possibleResultNode);
-                    var resultFlow = rGraph.Flow[pair];
-                    if(resultFlow == 0)
-                    {
-                        correctEdge = pair;
-                        break;
-                    }
-                }
+                var valueNode = networkFlowSolver.Graph.Nodes[edges.To];
+                var withFlow = rGraph.Nodes[valueNode.Id].Edges.Single(x => x.Flow > 0);
+                var resultNode = networkFlowSolver.Graph.Nodes[withFlow.To];
+                var valuePair = networkFlowSolver.Graph.Nodes[valueNode.Id].ValuePair;
+                var result    = resultNode.Result;
 
-                if (correctEdge == null)
-                    throw new Exception("FUCK");
+                var hej = networkFlowSolver.Graph.Edges.First(x => x.From == withFlow.From && x.To == withFlow.To);
 
-                var valuePair = networkFlowSolver.Graph.Nodes[valuePairNode].ValuePair;
-                var result    = networkFlowSolver.Graph.Nodes[correctEdge.Item2].Result;
-                var sign      = networkFlowSolver.Graph.Sign[correctEdge];
+                var sign = hej.Sign;
                 Console.WriteLine($"{valuePair.Item1} {sign} {valuePair.Item2} = {result}");
             }
         }

@@ -8,9 +8,9 @@ namespace NetworkFlow;
 public class Graph
 {
     public List<Node> Nodes { get; set; } = new List<Node>();
-    public Dictionary<Tuple<int, int>, int> Flow { get; set; } = new Dictionary<Tuple<int, int>, int>();
-    public Dictionary<Tuple<int, int>, char> Sign { get; set; } = new Dictionary<Tuple<int, int>, char>();
+    public List<Edge> Edges { get; set; } = new List<Edge>();
     public int V => Nodes.Count;
+    public int E => Edges.Count;
 
     public void AddNode(Node node) => Nodes.Add(node);
     public Node CreateNewNode()
@@ -19,13 +19,20 @@ public class Graph
         AddNode(node);
         return node;
     }
-    public void AddEdge(int v, int w, int c, char? sign = null)
+    public void AddEdge(int v, int w, int c, char? sign = null, bool isReverse = false)
     {
-        var edge = new Tuple<int, int>(v, w);
-        Flow[edge] = c;
-        Nodes[v].Neighbors.Add(w);
-        if (sign != null)
-            Sign[edge] = sign.Value;
+        var edge = new Edge {
+            Id = Edges.Count,
+            From = v,
+            To = w,
+            Capacity = c,
+            Flow = 0,
+            Sign = sign,
+            IsReverse = isReverse,
+        };
+        var fromNode = Nodes[v];
+        fromNode.Edges.Add(edge);
+        Edges.Add(edge);
     }
 }
  
@@ -57,16 +64,18 @@ public class AdjancencyListNetworkFlow
             var b = int.MaxValue;
             for (var vertex = Sink.Id; vertex != Source.Id; vertex = parents[vertex])
             {
-                int parent = parents[vertex];
-                b = Math.Min(b, rGraph.Flow[new Tuple<int, int>(parent, vertex)]);
+                var parent = rGraph.Nodes[parents[vertex]];
+                var edge = parent.GetEdgeTo(vertex);
+                b = Math.Min(b, edge.ResidualCapacity);
             }
 
             // Augment the path
             for (var vertex = Sink.Id; vertex != Source.Id; vertex = parents[vertex])
             {
-                int parent = parents[vertex];
-                rGraph.Flow[new Tuple<int, int>(vertex, parent)] += b; // Normal edge
-                rGraph.Flow[new Tuple<int, int>(parent, vertex)] -= b; // Reverse edge
+                var parent = rGraph.Nodes[parents[vertex]];
+                var node = rGraph.Nodes[vertex];
+                parent.GetEdgeTo(node.Id).Flow += b; // Normal edge
+                node.GetEdgeTo(parent.Id).Flow -= b; // Reverse edge
             }
 
             maxFlow += b;
@@ -84,19 +93,16 @@ public class AdjancencyListNetworkFlow
     {
         var V = Graph.V;
         var rGraph = new Graph();
-
         rGraph.Nodes = Graph.Nodes.Select(x => new Node(x.Id)).ToList();
 
         foreach(var node in Graph.Nodes)
         {
             int c;
-            foreach(var neighbor in node.Neighbors)
+            foreach(var edge in node.Edges)
             {
-                var edge = new Tuple<int, int>(node.Id, neighbor);
-                c = Graph.Flow[edge];
-
-                rGraph.AddEdge(node.Id, neighbor, c);
-                rGraph.AddEdge(neighbor, node.Id, 0);
+                c = edge.Capacity;
+                rGraph.AddEdge(node.Id, edge.To, c); // Normal
+                rGraph.AddEdge(edge.To, node.Id, 0, null, true); // Reverse
             }
         }
 
@@ -105,49 +111,34 @@ public class AdjancencyListNetworkFlow
 
     internal (bool, int[]) FindAugmentingPath(Graph rGraph)
     {
-        var V = Graph.V;
+        var V = rGraph.V;
         var explored = new bool[V];
         var parents = new int[V];
         explored[Source.Id] = true;
-        parents[Source.Id] = -1;
-
+        for(int i = 0; i < V; i++)
+            parents[i] = -1;
 
         // breadth first search
         var queue = new Queue<int>();
         queue.Enqueue(Source.Id);
         while (queue.Count > 0)
         {
-            var vertex = Graph.Nodes[queue.Dequeue()];
+            var vertex = rGraph.Nodes[queue.Dequeue()];
 
             // Look through all connections
-            foreach (var neighbor in vertex.Neighbors)
+            foreach (var edge in vertex.Edges)
             {
-                var flow = rGraph.Flow[new Tuple<int, int>(vertex.Id, neighbor)];
-                if (!explored[neighbor] && flow != 0)
+                if (!explored[edge.To] && edge.ResidualCapacity > 0)
                 {
-                    queue.Enqueue(neighbor);
-                    parents[neighbor] = vertex.Id;
-                    explored[neighbor] = true;
+                    queue.Enqueue(edge.To);
+                    parents[edge.To] = vertex.Id;
+                    explored[edge.To] = true;
 
-                    if (neighbor == Sink.Id)
-                        return(true, parents);
+                    //if (edge.To == Sink.Id)
+                    //    return(true, parents);
                 }
             }
         }
-
-        //depth first search
-        //var stack = new Stack<int>();
-        //stack.Push(Source.Id);
-
-        //while(stack.Count > 0)
-        //{
-        //    var vertex = Graph.Nodes[stack.Pop()];
-
-        //    if (!explored[vertex.Id])
-        //    {
-        //        explored[]
-        //    }
-        //}
 
         return (explored[Sink.Id], parents);
     }
@@ -156,7 +147,7 @@ public class AdjancencyListNetworkFlow
 public class Node
 {
     public int Id { get; set; }
-    public List<int> Neighbors { get; set; } = new List<int>();
+    public List<Edge> Edges { get; set; } = new List<Edge>();
     public Tuple<int, int>? ValuePair { get; set; }
     public long? Result { get; set; }
 
@@ -164,4 +155,17 @@ public class Node
     {
         this.Id = id;
     }
+    public Edge GetEdgeTo(int to) => this.Edges.First(x => x.To == to);
+}
+
+public class Edge
+{
+    public int Id { get; set; }
+    public int From { get; set; }
+    public int To { get; set; }
+    public int Capacity { get; set; }
+    public int Flow { get; set; } = 0;
+    public char? Sign { get; set; }
+    public bool IsReverse { get; set; } = false;
+    public int ResidualCapacity => Capacity - Flow;
 }
